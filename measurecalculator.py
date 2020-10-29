@@ -58,10 +58,3 @@ class MeasureCalculator:
         return assignments table grouped by student id, assignment info and the time between first assignment access and due date
 
     """
-
-files = [requests_file, discussions_file, assignments_file]
-mc = MeasureCalculator()
-mc.read_files(files)
-
-print(mc.assignment_interval_count('2019-11-10 19:21:03.710000-08:00','2019-11-19 19:21:03.710000-08:00').head(100))
-print(mc.late_assignment_count().head(100))

@@ -5,6 +5,10 @@ import datetime
 from typing import List, Callable
 
 student_id = 'mellon_id'
+requests_file = 'csvFiles/toy_requests.csv'
+discussions_file = 'csvFiles/toy_disc.csv'
+assignments_file = 'csvFiles/toy_asgmt.csv' 
+files = [requests_file,discussions_file,assignments_file]
 
 class MeasureCalculator:
     def __init__(self):
@@ -41,10 +45,12 @@ class MeasureCalculator:
         
         return words/len(self.dfs[1])
 
+    # total number of submissions per student
     def assignment_submission_count(self) -> dd:
         df = self.dfs[2]
         return df.groupby(student_id).size()
 
+    # avg student assignment score
     def assignment_average(self) -> dd:
         df = self.dfs[2]
         return df.groupby(student_id)['score'].mean()

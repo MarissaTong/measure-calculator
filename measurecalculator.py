@@ -31,6 +31,9 @@ class MeasureCalculator:
         due_column = 'due_at'
         return self.__count(2, lambda df: df[submitted_column] > df[due_column])
 
+    # def avg_wordcount_per_post(self) ->dd:
+        
+
     """
     The requests table is unrelated to the others, therefore, the following functions are proof of concept for now.
     

@@ -8,20 +8,24 @@ student_id = 'mellon_id'
 requests_file = 'toy_requests.csv'
 discussions_file = 'toy_disc.csv'
 assignments_file = 'toy_asgmt.csv'
+files = [requests_file,discussions_file,assignments_file]
 
 class MeasureCalculator:
     def __init__(self):
         self.dfs = []
 
-    def read_files(self, filenames: List[str]) -> None:
+    #loads appropriate files into list dfs
+    def read_files(self, filenames: List[str]) -> None: 
         for filename in filenames:
             df = dd.read_csv(filename, dtype={'submitted_at' : object, 'URL': object})
             self.dfs.append(df)
 
+    #used within class only, determines the size of applicable table & function
     def __count(self, table:int, f: Callable) -> dd:
         df = self.dfs[table]
         return df.loc[f].groupby(student_id).size()
 
+    #counts assignment between a given range; assignments file will be at index 2 in list
     def assignment_interval_count(self, start: str, end: str) -> dd:
         submitted_column = 'submitted_at'
         return self.__count(2, lambda df: (df[submitted_column] >= start) & (df[submitted_column] < end))
@@ -30,8 +34,6 @@ class MeasureCalculator:
         submitted_column = 'submitted_at'
         due_column = 'due_at'
         return self.__count(2, lambda df: df[submitted_column] > df[due_column])
-
-    # def avg_wordcount_per_post(self) ->dd:
         
 
     """
@@ -61,3 +63,13 @@ class MeasureCalculator:
         return assignments table grouped by student id, assignment info and the time between first assignment access and due date
 
     """
+    # avg word count per post (discussion forum)
+    # def avg_wordcount_per_post(self) ->dd:
+
+
+if __name__ == "__main__":
+    mc = MeasureCalculator()
+    mc.read_files(files)
+    print(mc.dfs)
+
+    mc.assignment_interval_count()

@@ -5,9 +5,7 @@ import datetime
 from typing import List, Callable
 
 student_id = 'mellon_id'
-requests_file = 'toy_requests.csv'
-discussions_file = 'toy_disc.csv'
-assignments_file = 'toy_asgmt.csv'
+
 
 class MeasureCalculator:
     def __init__(self):
@@ -31,7 +29,16 @@ class MeasureCalculator:
         due_column = 'due_at'
         return self.__count(2, lambda df: df[submitted_column] > df[due_column])
 
+    def assignment_submission_count(self) -> dd:
+        df = self.dfs[2]
+        return df.groupby(student_id).size()
+
+    def assignment_average(self) -> dd:
+        df = self.dfs[2]
+        return df.groupby(student_id)['score'].mean()
+
     """
+
     The requests table is unrelated to the others, therefore, the following functions are proof of concept for now.
     
     def visits_after_deadline(self) -> int:
@@ -58,3 +65,5 @@ class MeasureCalculator:
         return assignments table grouped by student id, assignment info and the time between first assignment access and due date
 
     """
+
+

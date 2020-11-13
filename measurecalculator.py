@@ -36,14 +36,61 @@ class MeasureCalculator:
         due_column = 'due_at'
         return self.__count(2, lambda df: df[submitted_column] > df[due_column])
         
-    # avg word count per post (discussion forum)
-    def avg_wordcount_per_post(self) ->int:
-        words = 0
-        for key,value in self.dfs[1]['message'].iteritems():
-            l = value.split(" ")
-            words+= len(l)
-        
-        return words/len(self.dfs[1])
+
+    #32, # replies to forums posts 
+    def replies_posts(self) -> dd:
+        df = self.dfs[1]
+        df = df[[student_id,'parent_discussion_entry_id']]
+    
+        return df.dropna(subset=['parent_discussion_entry_id']).groupby(student_id).size()
+
+    #36, avg word count per post (discussion forum)
+    def avg_wordcount_per_post(self) -> int:
+        df = self.dfs[1]
+        #gets all of the messages/ids where the message is a post(excluding a reply)
+        df = df[[student_id,'parent_discussion_entry_id','message']][df['parent_discussion_entry_id'].isnull()] 
+        d = {} 
+        ids = [] 
+        avgword = []
+
+        for t in df.drop_duplicates(subset=student_id).itertuples():
+            d[t[1]] = [0,0]
+
+        for t in df[[student_id,'message']].itertuples():
+                d[t[1]][1] += len(t[2])
+                d[t[1]][0]+=1
+
+        for k,v in d.items():
+            ids.append(k)
+            avgword.append(d[k][1]/d[k][0])
+          
+        p = pd.DataFrame(list(zip(ids,avgword)),columns = [student_id,'avg_wordcount'])
+        df = dd.from_pandas(p,npartitions=1)
+        return df
+
+    #37, avg word ount per reply (discussion forum)
+    def avg_wordcount_per_reply(self) -> dd:
+        df = self.dfs[1]
+        #gets all of the messages/ids where the message is a post(excluding a reply)
+        df = df[[student_id,'parent_discussion_entry_id','message']].dropna(subset=['parent_discussion_entry_id'])
+        d = {} 
+        ids = [] 
+        avgword = []
+
+        for t in df.drop_duplicates(subset=student_id).itertuples():
+            d[t[1]] = [0,0]
+
+        for t in df[[student_id,'message']].itertuples():
+                d[t[1]][1] += len(t[2])
+                d[t[1]][0]+=1
+
+        for k,v in d.items():
+            ids.append(k)
+            avgword.append(d[k][1]/d[k][0])
+          
+        p = pd.DataFrame(list(zip(ids,avgword)),columns = [student_id,'avg_wordcount'])
+        df = dd.from_pandas(p,npartitions=1)
+        return df
 
     # total number of submissions per student
     def assignment_submission_count(self) -> dd:
@@ -68,13 +115,6 @@ class MeasureCalculator:
     
         return count of views after deadline with matching urls for each student
     
-    def visits_after_deadline(self) -> int:
-        req = self.dfs[0] # get requests table
-        asgmt = self.dfs[1] # get assignments table
-        deadlines = req[[student_id, 'due_at', 'url']]
-        views = asgmt[[student_id, 'timestamp', 'url']]
-    
-        return count of views before deadline with matching urls for each student
     
     def first_assignment_access(self) -> dd:
         req = self.dfs[0] # get requests table
@@ -83,6 +123,44 @@ class MeasureCalculator:
         
         return assignments table grouped by student id, assignment info and the time between first assignment access and due date
 
+
+    #45, visits to the gradebook (toyrequest sheet)
+    def visits_gradebook(self) -> dd:
+        df = self.dfs[0]
+        df = df[[student_id,'web_application_controller']][df['web_application_controller'] == 'gradebooks']
+        
+        return requests table grouped by student id and use the size function (this is to get the # of times EACH student clicked gradebooks)
+
+
+    #46, clicks on instructional content (toyrequest sheet)
+    def clicks_instrucContent(self) -> dd:
+        df = self.dfs[0]
+        df = df[[student_id,'web_application_controller']][(df['web_application_controller'] == 'files') | (df['web_application_controller'] == 'context_modules') ]
+
+        return requests table grouped by student id and use the size function (get the # of times EACH student clicked anything related to instructional content) 
+
+
+   #48, files clicked/viewed (toyrequest sheet)
+    def file_count(self) -> dd:
+        df = self.dfs[0]
+        df = df[[student_id,'web_application_controller']][df['web_application_controller'] == 'files']
+
+        return requests table grouped by student id and use the size function (get the # of times EACH student clicked files) 
+
+
+    #61, # of clicks total (toyrequest sheet) 
+    def clicks(self) -> dd:
+        df = self.dfs[0]
+
+        return requests table grouped by student id and use the size function (get the # of times EACH student clicked ANYTHING) 
+
+    #62, time spent online -> dd:
+        req = self.dfs[0]
+        disc = self.dfs[1]
+        asmgt = self.dfs[2]
+        
+        
+        return new dd with student Id and corresponding time spent online 
     """
 
 
@@ -90,4 +168,7 @@ if __name__ == "__main__":
     mc = MeasureCalculator()
     mc.read_files(files)
 
-    print(mc.avg_wordcount_per_post())
+    df = mc.avg_wordcount_per_reply()
+    print(df)
+
+    df.to_csv(['csvFiles/random_testing.csv'])

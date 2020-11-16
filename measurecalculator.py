@@ -91,6 +91,7 @@ class MeasureCalculator:
         p = pd.DataFrame(list(zip(ids,avgword)),columns = [student_id,'avg_wordcount'])
         df = dd.from_pandas(p,npartitions=1)
         return df
+    
 
     # total number of submissions per student
     def assignment_submission_count(self) -> dd:
@@ -124,10 +125,32 @@ class MeasureCalculator:
         return assignments table grouped by student id, assignment info and the time between first assignment access and due date
 
 
+    #38, quality of discussion post 
+    def quality_discpost(self) -> dd:
+        df = self.dfs[1]
+        df = df [[student_id,'depth','parent_discussion_entry_id']][df['parent_discussion_entry_id'].isnull()] 
+
+        return 
+
+
+    #40, # of course calendar views
+    def calendar_views(self) -> dd:
+        df = self.dfs[0]
+        df = df[[student_id,'action']][df['action'] == 'Click on "View Course Calendar"']
+
+        return requests table grouped by id an action of viewing the course calendar
+    
+    #42, # of course syllabus views
+    def syllabus(self) -> dd:
+        df = self.dfs[0]
+        df = df[[student_id,'action']][df['action'] == 'Click on "Syllabus" on the left panel' | df['action'] == 'Click the course link that the students take (enter the syllabus page) in people page']
+
+        return equests table grouped by student id and how many times they visited the syllbus of a course page 
+
     #45, visits to the gradebook (toyrequest sheet)
     def visits_gradebook(self) -> dd:
         df = self.dfs[0]
-        df = df[[student_id,'web_application_controller']][df['web_application_controller'] == 'gradebooks']
+        df = df[[student_id,'action']][df['action'] == 'Click on "Grades"']
         
         return requests table grouped by student id and use the size function (this is to get the # of times EACH student clicked gradebooks)
 
@@ -159,7 +182,7 @@ class MeasureCalculator:
         disc = self.dfs[1]
         asmgt = self.dfs[2]
         
-        
+
         return new dd with student Id and corresponding time spent online 
     """
 

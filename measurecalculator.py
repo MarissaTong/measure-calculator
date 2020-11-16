@@ -25,17 +25,31 @@ class MeasureCalculator:
         df = self.dfs[table]
         return df.loc[f].groupby(student_id).size()
 
-    #counts assignment between a given date range; assignments file will be at index 2 in list
+    #3, counts assignment between a given date range; assignments file will be at index 2 in list
     def assignment_interval_count(self, start: str, end: str) -> dd:
         submitted_column = 'submitted_at'
         return self.__count(2, lambda df: (df[submitted_column] >= start) & (df[submitted_column] < end))
 
-    #counts late assignments between a given date range; assignments file will be at index 2 in list
+    #4, counts late assignments between a given date range; assignments file will be at index 2 in list
     def late_assignment_count(self) -> dd:
         submitted_column = 'submitted_at'
         due_column = 'due_at'
         return self.__count(2, lambda df: df[submitted_column] > df[due_column])
-        
+
+    #10, total number of submissions per student
+    def assignment_submission_count(self) -> dd:
+        df = self.dfs[2]
+        return df.groupby(student_id).size()
+
+    #15, avg student assignment score
+    def assignment_average(self) -> dd:
+        df = self.dfs[2]
+        return df.groupby(student_id)['score'].mean()
+
+    #30, total number of discussion forum posts per student
+    def disc_post_count(self) -> dd:
+        df = self.dfs[1]
+        return df.groupby(student_id).size()
 
     #32, # replies to forums posts 
     def replies_posts(self) -> dd:
@@ -92,21 +106,12 @@ class MeasureCalculator:
         df = dd.from_pandas(p,npartitions=1)
         return df
 
-    # total number of submissions per student
-    def assignment_submission_count(self) -> dd:
-        df = self.dfs[2]
-        return df.groupby(student_id).size()
-
-    # avg student assignment score
-    def assignment_average(self) -> dd:
-        df = self.dfs[2]
-        return df.groupby(student_id)['score'].mean()
-
     """
 
     The requests table is unrelated to the others, therefore, the following functions are proof of concept for now.
     Mostly for Toy Data Request table
 
+    #5, visits after deadline 
     def visits_after_deadline(self) -> int:
         req = self.dfs[0] # get requests table
         asgmt = self.dfs[1] # get assignments table
@@ -114,8 +119,18 @@ class MeasureCalculator:
         views = asgmt[[student_id, 'timestamp', 'url']]
     
         return count of views after deadline with matching urls for each student
+
+
+    #6, visits before deadline 
+    def visits_before_deadline(self) -> int:
+        req = self.dfs[0] # get requests table
+        asgmt = self.dfs[1] # get assignments table
+        deadlines = req[[student_id, 'due_at', 'url']]
+        views = asgmt[[student_id, 'timestamp', 'url']]
     
+        return count of views before deadline with matching urls for each student
     
+    #7, time between first assignment access and assignment due date
     def first_assignment_access(self) -> dd:
         req = self.dfs[0] # get requests table
         asgmt = self.dfs[1] # get assignments table
@@ -123,6 +138,9 @@ class MeasureCalculator:
         
         return assignments table grouped by student id, assignment info and the time between first assignment access and due date
 
+    #31, number of discussion forum views
+    def disc_views(self) -> dd:
+        return self.__count(1, lambda df: df["action"] == "Read a reply in a discussion")
 
     #45, visits to the gradebook (toyrequest sheet)
     def visits_gradebook(self) -> dd:

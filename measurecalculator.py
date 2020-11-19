@@ -8,7 +8,8 @@ student_id = 'mellon_id'
 requests_file = 'csvFiles/toy_requests.csv'
 discussions_file = 'csvFiles/toy_disc.csv'
 assignments_file = 'csvFiles/toy_asgmt.csv' 
-files = [requests_file,discussions_file,assignments_file]
+quizzes_file = 'csvFiles/toy_quiz.csv' 
+files = [requests_file,discussions_file,assignments_file, quizzes_file]
 
 class MeasureCalculator:
     def __init__(self):
@@ -17,7 +18,30 @@ class MeasureCalculator:
     #loads appropriate files into list dfs; reads files into a dask dataframe
     def read_files(self, filenames: List[str]) -> None: 
         for filename in filenames:
-            df = dd.read_csv(filename, dtype={'submitted_at' : object, 'URL': object,'deleted_at':object,'topic_delayed_post_at':object, 'topic_type': object})
+            df = dd.read_csv(filename, dtype={
+                'submitted_at' : object, 
+                'URL': object,
+                'deleted_at': object,
+                'topic_delayed_post_at': object, 
+                'topic_type': object,
+                'description' : object,
+                'assignment_id': 'float64',
+                'course_current_Score': 'float64',
+                'course_final_score': 'float64',
+                'extra_attempts': 'float64',
+                'extra_time': 'float64',
+                'grade_matches_current_submission': 'float64',
+                'group_a': 'float64',
+                'group_b': 'float64',
+                'mellon_id': 'float64',
+                'points_possible': 'float64',
+                'quiz_fudge_points': 'float64',
+                'quiz_id': 'float64',
+                'quiz_points_possible': 'float64',
+                'quiz_total_attempts': 'float64',
+                'submission_id': 'float64',
+                'time_taken': 'float64'})
+
             self.dfs.append(df)
 
     #used within class only, determines the size of applicable table & function
@@ -45,6 +69,31 @@ class MeasureCalculator:
     def assignment_average(self) -> dd:
         df = self.dfs[2]
         return df.groupby(student_id)['score'].mean()
+
+    #20, avg number of attempts per quiz
+    def avg_quiz_attempts(self) -> dd:
+        df = self.dfs[3]
+        quiz_attempts = "quiz_total_attempts"
+        return df.groupby(student_id)[quiz_attempts].mean()
+
+    #21, number of quizzes attempted per student
+    def quizzes_attempted(self) -> dd:
+        df = self.dfs[3]
+        quiz_attempts = "quiz_total_attempts"
+        return df.groupby(student_id)[quiz_attempts].sum()
+
+    #23, number of quizzes passed/completed per student 
+    def quizzes_passed(self) -> dd:
+        correct = 'quiz_submission_kept_score'
+        total = 'quiz_points_possible'
+        return self.__count(3, lambda df: df[correct]/df[total] >= .735)
+
+    #27, number of practice quizzes attempted per student
+    def practice_quizzes_attempted(self) -> dd:
+        df = self.dfs[3]
+        t = "quiz_type"
+        quiz_attempts = "quiz_total_attempts"
+        return df.loc[lambda df: df[t] == "practice_quiz"].groupby(student_id)[quiz_attempts].sum()
 
     #30, total number of discussion forum posts per student
     def disc_post_count(self) -> dd:
@@ -255,7 +304,7 @@ if __name__ == "__main__":
     mc = MeasureCalculator()
     mc.read_files(files)
 
-    df = mc.study_sessions()
+    df = mc.avg_wordcount_per_post()
     print(df)
 
     df.to_csv(['csvFiles/random_testing.csv'])

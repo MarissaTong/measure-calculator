@@ -51,12 +51,6 @@ class MeasureCalculator:
         df = self.dfs[1]
         return df.groupby(student_id).size()
 
-    #32, # replies to forums posts 
-    def replies_posts(self) -> dd:
-        df = self.dfs[1]
-        df = df[[student_id,'parent_discussion_entry_id']]
-    
-        return df.dropna(subset=['parent_discussion_entry_id']).groupby(student_id).size()
 
     #36, avg word count per post (discussion forum)
     def avg_wordcount_per_post(self) -> int:
@@ -107,6 +101,18 @@ class MeasureCalculator:
         return df
     
 
+    #38, quality of discussion post 
+    def quality_discpost(self) -> dd:
+        df = self.dfs[1]
+        return df[[student_id,'depth']][df['parent_discussion_entry_id'].isnull()] 
+
+
+    #39, quality of discussion reply
+    def quality_discreply(self) -> dd:
+        df = self.dfs[1]
+        df = df.dropna(subset=['parent_discussion_entry_id'])
+        return df[[student_id,'depth']]
+
     """
 
     The requests table is unrelated to the others, therefore, the following functions are proof of concept for now.
@@ -143,34 +149,60 @@ class MeasureCalculator:
     def disc_views(self) -> dd:
         return self.__count(1, lambda df: df["action"] == "Read a reply in a discussion")
 
-    #38, quality of discussion post 
-    def quality_discpost(self) -> dd:
-        df = self.dfs[1]
-        df = df [[student_id,'depth','parent_discussion_entry_id']][df['parent_discussion_entry_id'].isnull()] 
 
-        return 
+    #32, # replies to forums posts 
+    def replies_posts(self) -> dd:
+        return self.__count(0, lambda df: df['action'] == 'Click "Post Reply" in a discussion')
+
+
+    #33, time spent posting messages on discussion board
+    def time_post_disc(self) -> dd:
+        
+
+
+    #34, time spent replying to forum posts
+    def time_reply_disc(self) ->dd:
+        req = self.dfs[0] #requests table
+        disc = self.dfs[1] #discussion table
+
+        req = req[[student_id,'timestamp','url','action']][req['action'] == 'Click "Reply" to an entry(reply) in a discussion' | req['action'] == 'Click "Post Reply" in a discussion']
+        #get the time stemp from clicking reply to clicking post to calculate time spent according to student id
+
+        return table corresponding student id, message & duration of time taken to post
+
+
+
+    #35, time spent viewing discussions
+    def time_view_disc(self) -> dd:
+        req = self.dfs[0] #requests table
+        req = req[[student_id,'timestamp','action']][req['action'] == 'Click on a discussion post' | req['action'] == 'Click a discussion (api)']
+        #calculate how long time was spent viewing discussion page
+
+        return table corresponding to student id and length of time viewing discussion
 
 
     #40, # of course calendar views
     def calendar_views(self) -> dd:
-        df = self.dfs[0]
-        df = df[[student_id,'action']][df['action'] == 'Click on "View Course Calendar"']
-
-        return requests table grouped by id an action of viewing the course calendar
+        return self.__count(0, lambda df: df['action'] == 'Click on "View Course Calendar"')
     
+
+    #41, time spent on course home page
+    def time_homepage(self) -> dd:
+        req = self.dfs[0] #requests table
+        l = ['Click on "View Course Stream"','Click "Home" on the left panel','Click on "View Course Calendar"', 'Click on "View Course Notifications"', 'Go on To-Do Item']
+        req = req[[student_id, 'timestamp']][req['action] = lambda x: x, l]
+
+        return table organized by student id and calculated time spent on course page
+
+
     #42, # of course syllabus views
     def syllabus(self) -> dd:
-        df = self.dfs[0]
-        df = df[[student_id,'action']][df['action'] == 'Click on "Syllabus" on the left panel' | df['action'] == 'Click the course link that the students take (enter the syllabus page) in people page']
+        return self.__count(0, lambda df: df['action'] == 'Click on "Syllabus" on the left panel' | df['action'] == 'Click the course link that the students take (enter the syllabus page) in people page')
 
-        return equests table grouped by student id and how many times they visited the syllbus of a course page 
 
     #45, visits to the gradebook (toyrequest sheet)
     def visits_gradebook(self) -> dd:
-        df = self.dfs[0]
-        df = df[[student_id,'action']][df['action'] == 'Click on "Grades"']
-        
-        return requests table grouped by student id and use the size function (this is to get the # of times EACH student clicked gradebooks)
+        return self.__count(0, lambda df: df['action'] == 'Click on "Grades"')
 
 
     #46, clicks on instructional content (toyrequest sheet)
@@ -183,24 +215,38 @@ class MeasureCalculator:
 
    #48, files clicked/viewed (toyrequest sheet)
     def file_count(self) -> dd:
-        df = self.dfs[0]
-        df = df[[student_id,'web_application_controller']][df['web_application_controller'] == 'files']
-
-        return requests table grouped by student id and use the size function (get the # of times EACH student clicked files) 
+        return self.__count(0, lambda df: df["action"] == "Click on / View a specific file" | df["action"] == "view a file in files")
 
 
-    #61, # of clicks total (toyrequest sheet) 
+    #53, # accesses to lecture videos
+    def lecture_vid_access(self) -> dd:
+        return self.__count(0,lambda df: df['action'] == 'Click on a recording (Specify Recording)')
+
+
+    #56, # study sessions
+    def study_sessions(self) ->dd:
+        req = self.dfs[0]
+        return req[[student_id,'session_id']].groupby(student_id).size()
+
+
+    #57, # study sessions (first 8 weeks)
+    def study_sessions_8(self) -> dd:
+        req = self.dfs[0]
+        req = req[[student_id,'session_id','timestamp']][req['timestamp'] < #get earliest time and add 8 weeks to it]
+
+        return req.groupby(student_id).size()
+
+
+    #61, # of clicks total (toyrequest sheet) ?
     def clicks(self) -> dd:
-        df = self.dfs[0]
+        return self.__count(0, lambda df: if "click" in df["action"].lower())
 
-        return requests table grouped by student id and use the size function (get the # of times EACH student clicked ANYTHING) 
 
     #62, time spent online -> dd:
         req = self.dfs[0]
         disc = self.dfs[1]
         asmgt = self.dfs[2]
         
-
         return new dd with student Id and corresponding time spent online 
     """
 
@@ -209,7 +255,7 @@ if __name__ == "__main__":
     mc = MeasureCalculator()
     mc.read_files(files)
 
-    df = mc.avg_wordcount_per_reply()
+    df = mc.study_sessions()
     print(df)
 
     df.to_csv(['csvFiles/random_testing.csv'])

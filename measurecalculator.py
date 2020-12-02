@@ -206,7 +206,7 @@ class MeasureCalculator:
 
     #33, time spent posting messages on discussion board
     def time_post_disc(self) -> dd:
-        
+        return self.__count(0, lambda df: df['action'] == 'Click "Reply" to an entry(reply) in a discussion')
 
 
     #34, time spent replying to forum posts
@@ -267,10 +267,39 @@ class MeasureCalculator:
         return self.__count(0, lambda df: df["action"] == "Click on / View a specific file" | df["action"] == "view a file in files")
 
 
+    $47 # accesses to lecture slides
+    def lecSlide_access(self) -> dd:
+        req = self.dfs[0]
+        req = req[req['web_application_controller'] == 'files']
+        req = req[[student_id,'url']][req['url].find('lecture') != -1]
+
+        return req.groupby(student_id).size()
+
+    #50 time spent on online learning materials/resources
+    def learn(self) ->dd:
+        req = self.dfs[0]
+        req = req[[student_id,'action', 'session_id']]
+        calcuate time sepnt on learning materials/resources by looking at action after learning and calculate time
+
+        return dd of student id and time spent on learning materials
+
+
+    #52 # of accesses to a page containing course/reading materials
+        return self.__count(0, lambda df: df['action] == 'Click on / View a specific file' | df['action'] == 'view a file in files')
+
+
     #53, # accesses to lecture videos
     def lecture_vid_access(self) -> dd:
         return self.__count(0,lambda df: df['action'] == 'Click on a recording (Specify Recording)')
 
+
+    #55 time spent accessing video lectures
+    def lecture_vid_time(self)->>dd:
+        df = self.dfs[0]
+        df = df[[student_id,'session_id','action']][df['action] == 'Click on a recording (Specify Recording)']
+        calculate time of session id
+
+        return time spent on accessing video lectures corresponnding with student id
 
     #56, # study sessions
     def study_sessions(self) ->dd:
@@ -286,16 +315,25 @@ class MeasureCalculator:
         return req.groupby(student_id).size()
 
 
-    #61, # of clicks total (toyrequest sheet) ?
+    #58 avg # of any actions in sessions with assignment views 
+    def avg_actions_assignment_views(self) -> dd:
+        req = self.dfs[0]
+        req = req[[student_id,'session_id','web_application_controller']][df['web_application_controller'] == 'assignments']
+        req = use session ids from above and compare and create a dd that has other actions w/corresponding session_id
+
+        return req.groupby(student_id).size()
+
+    #61, # of clicks total (toyrequest sheet) 
     def clicks(self) -> dd:
         return self.__count(0, lambda df: if "click" in df["action"].lower())
 
 
     #62, time spent online -> dd:
         req = self.dfs[0]
-        disc = self.dfs[1]
-        asmgt = self.dfs[2]
-        
+        login = req.loc[req.groupby([student_id, 'timestamp'])['timestamp'].idxmin()]
+        logout = req.loc[req.groupby([student_id, 'timestamp'])['timestamp'].idxmax()]
+        calculate time for each student id
+
         return new dd with student Id and corresponding time spent online 
     """
 
